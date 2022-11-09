@@ -43,8 +43,17 @@ void Fill(AlignedArray* out, scalar_t val) {
   }
 }
 
-
-
+void GetNextCounters(std::vector<uint32_t>& dim_loop_counters, std::vector<uint32_t> shape) {
+  int i = dim_loop_counters.size() - 1;
+  dim_loop_counters[i]++;
+  while (i >= 0 && dim_loop_counters[i] == shape[i]) {
+    dim_loop_counters[i] = 0;
+    i--;
+    if (i >= 0) {
+      dim_loop_counters[i]++;
+    }
+  }
+}
 
 void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> shape,
              std::vector<uint32_t> strides, size_t offset) {
@@ -63,7 +72,21 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> sha
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN YOUR SOLUTION
-  
+  std::vector<uint32_t> dim_loop_counters(shape.size(), 0);
+  int total_elem = 1;
+  for (int i = 0; i < shape.size(); i++) {
+    total_elem *= shape[i];
+  }
+  for (int i = 0; i < total_elem; i++) {
+    int a_idx = offset;
+    for (int j = 0; j < strides.size(); j++) {
+      a_idx += strides[j] * dim_loop_counters[j];
+    }
+    out->ptr[i] = a.ptr[a_idx];
+    if (i < total_elem - 1) {
+      GetNextCounters(dim_loop_counters, shape);
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -80,7 +103,21 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN YOUR SOLUTION
-  
+  std::vector<uint32_t> dim_loop_counters(shape.size(), 0);
+  int total_elem = 1;
+  for (int i = 0; i < shape.size(); i++) {
+    total_elem *= shape[i];
+  }
+  for (int i = 0; i < total_elem; i++) {
+    int out_idx = offset;
+    for (int j = 0; j < strides.size(); j++) {
+      out_idx += strides[j] * dim_loop_counters[j];
+    }
+    out->ptr[out_idx] = a.ptr[i];
+    if (i < total_elem - 1) {
+      GetNextCounters(dim_loop_counters, shape);
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -101,7 +138,21 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  std::vector<uint32_t> dim_loop_counters(shape.size(), 0);
+  int total_elem = 1;
+  for (int i = 0; i < shape.size(); i++) {
+    total_elem *= shape[i];
+  }
+  for (int i = 0; i < total_elem; i++) {
+    int out_idx = offset;
+    for (int j = 0; j < strides.size(); j++) {
+      out_idx += strides[j] * dim_loop_counters[j];
+    }
+    out->ptr[out_idx] = val;
+    if (i < total_elem - 1) {
+      GetNextCounters(dim_loop_counters, shape);
+    }
+  }
   /// END YOUR SOLUTION
 }
 

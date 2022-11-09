@@ -32,15 +32,15 @@ class BackendDevice:
     def randn(self, *shape, dtype="float32"):
         # note: numpy doesn't support types within standard random routines, and
         # .astype("float32") does work if we're generating a singleton
-        return NDArray(numpy.random.randn(*shape).astype(dtype), device=self)
+        return NDArray(np.random.randn(*shape).astype(dtype), device=self)
 
     def rand(self, *shape, dtype="float32"):
         # note: numpy doesn't support types within standard random routines, and
         # .astype("float32") does work if we're generating a singleton
-        return NDArray(numpy.random.rand(*shape).astype(dtype), device=self)
+        return NDArray(np.random.rand(*shape).astype(dtype), device=self)
 
     def one_hot(self, n, i, dtype="float32"):
-        return NDArray(numpy.eye(n, dtype=dtype)[i], device=self)
+        return NDArray(np.eye(n, dtype=dtype)[i], device=self)
 
     def empty(self, shape, dtype="float32"):
         dtype = "float32" if dtype is None else dtype
@@ -241,7 +241,14 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if prod(self._shape) != prod(new_shape):
+            raise ValueError(f'Prod of current shape {prod(self._shape)} is not '
+                             f'equal to the prod of the new shape {prod(new_shape)}')
+        if not self.is_compact():
+            raise ValueError('Matrix is not compact')
+        new_strides = self.compact_strides(new_shape)
+        return NDArray.make(new_shape, strides=new_strides, device=self._device,
+                            handle=self._handle, offset=self._offset)
         ### END YOUR SOLUTION
 
     def permute(self, new_axes):
@@ -264,7 +271,10 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_strides = tuple(self._strides[i] for i in new_axes)
+        new_shape = tuple(self._shape[i] for i in new_axes)
+        return NDArray.make(new_shape, strides=new_strides, device=self._device,
+                            handle=self._handle, offset=self._offset)
         ### END YOUR SOLUTION
 
     def broadcast_to(self, new_shape):
@@ -285,7 +295,17 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_strides = []
+        len_diff = len(new_shape) - len(self._shape)
+        for i in range(-1, -len(self._shape) - 1, -1):
+            if self._shape[i] != new_shape[i]:
+                assert self._shape[i] == 1
+                new_strides.append(0)
+            else:
+                new_strides.append(self._strides[i])
+        new_strides = tuple([0] * len_diff + new_strides[::-1])
+        return NDArray.make(new_shape, strides=new_strides, device=self._device,
+                            handle=self._handle, offset=self._offset)
         ### END YOUR SOLUTION
 
     ### Get and set elements
@@ -293,15 +313,15 @@ class NDArray:
     def process_slice(self, sl, dim):
         """ Convert a slice to an explicit start/stop/step """
         start, stop, step = sl.start, sl.stop, sl.step
-        if start == None:
+        if start is None:
             start = 0
         if start < 0:
             start = self.shape[dim]
-        if stop == None:
+        if stop is None:
             stop = self.shape[dim]
         if stop < 0:
             stop = self.shape[dim] + stop
-        if step == None:
+        if step is None:
             step = 1
 
         # we're not gonna handle negative strides and that kind of thing
@@ -348,7 +368,20 @@ class NDArray:
         assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_shape = list(self._shape)
+        for i, s in enumerate(idxs):
+            if s.start >= new_shape[i]:
+                raise IndexError(f'Out of boundary at dim {i}, start index = {s.start} '
+                                 f'>= maximum valid index {new_shape[i]}')
+            new_shape[i] = 1 + (min(s.stop, self._shape[i]) - 1 - s.start) // s.step
+
+        new_strides = list(self._strides)
+        new_offset = 0
+        for i, idx in enumerate(idxs):
+            new_offset += self._strides[i] * idx.start
+            new_strides[i] *= idx.step
+        return NDArray.make(tuple(new_shape), strides=tuple(new_strides), device=self._device,
+                            handle=self._handle, offset=new_offset)
         ### END YOUR SOLUTION
 
     def __setitem__(self, idxs, other):
@@ -549,7 +582,7 @@ def array(a, dtype="float32", device=None):
 
 def empty(shape, dtype="float32", device=None):
     device = device if device is not None else default_device()
-    return devie.empty(shape, dtype)
+    return device.empty(shape, dtype)
 
 
 def full(shape, fill_value, dtype="float32", device=None):

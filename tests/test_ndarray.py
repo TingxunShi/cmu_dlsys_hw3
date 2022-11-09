@@ -1,11 +1,13 @@
 import numpy as np
 import pytest
 import mugrade
+import sys
+sys.path.append('./python')
 import needle as ndl
 from needle import backend_ndarray as nd
 
 
-_DEVICES = [nd.cpu(), pytest.param(nd.cuda(), 
+_DEVICES = [nd.cpu(), pytest.param(nd.cuda(),
     marks=pytest.mark.skipif(not nd.cuda().enabled(), reason="No GPU"))]
 
 
