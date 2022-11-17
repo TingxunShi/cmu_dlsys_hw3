@@ -156,24 +156,6 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
   /// END YOUR SOLUTION
 }
 
-void EwiseAdd(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
-  /**
-   * Set entries in out to be the sum of correspondings entires in a and b.
-   */
-  for (size_t i = 0; i < a.size; i++) {
-    out->ptr[i] = a.ptr[i] + b.ptr[i];
-  }
-}
-
-void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
-  /**
-   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
-   */
-  for (size_t i = 0; i < a.size; i++) {
-    out->ptr[i] = a.ptr[i] + val;
-  }
-}
-
 
 /**
  * In the code the follows, use the above template to create analogous element-wise
@@ -197,6 +179,159 @@ void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
 
 /// BEGIN YOUR SOLUTION
 
+template <typename OP>
+void EWiseOp(const AlignedArray& a, const AlignedArray& b, AlignedArray *out, OP op) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = op(a.ptr[i], b.ptr[i]);
+  }
+}
+
+template <typename OP>
+void EWiseOp(const AlignedArray& a, AlignedArray *out, OP op) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = op(a.ptr[i]);
+  }
+}
+
+template <typename OP>
+void ScalarOp(const AlignedArray& a, scalar_t val, AlignedArray *out, OP op) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = op(a.ptr[i], val);
+  }
+}
+
+void EwiseAdd(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, std::plus<scalar_t>());
+}
+
+void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, std::plus<scalar_t>());
+}
+
+void EwiseMul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, std::multiplies<scalar_t>());
+}
+
+void ScalarMul(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, std::multiplies<scalar_t>());
+}
+
+void EwiseDiv(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, std::divides<scalar_t>());
+}
+
+void ScalarDiv(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, std::divides<scalar_t>());
+}
+
+scalar_t pow(const scalar_t& a, const scalar_t& b) {
+  return std::pow<scalar_t>(a, b);
+}
+
+void ScalarPower(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, pow);
+}
+
+scalar_t max(const scalar_t& a, const scalar_t& b) {
+  return (a > b) ? a : b;
+}
+
+void EwiseMaximum(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, max);
+}
+
+void ScalarMaximum(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, max);
+}
+
+void EwiseEq(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, std::equal_to<scalar_t>());
+}
+
+void ScalarEq(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, std::equal_to<scalar_t>());
+}
+
+void EwiseGe(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, b, out, std::greater_equal<scalar_t>());
+}
+
+void ScalarGe(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of corresponding entry in a plus the scalar val.
+   */
+  ScalarOp(a, val, out, std::greater_equal<scalar_t>());
+}
+
+scalar_t log(const scalar_t &a) {
+  return std::log(a);
+}
+
+void EwiseLog(const AlignedArray& a, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, out, log);
+}
+
+scalar_t exp(const scalar_t &a) {
+  return std::exp(a);
+}
+
+void EwiseExp(const AlignedArray& a, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, out, exp);
+}
+
+scalar_t tanh(const scalar_t &a) {
+  return std::tanh(a);
+}
+
+void EwiseTanh(const AlignedArray& a, AlignedArray* out) {
+  /**
+   * Set entries in out to be the sum of correspondings entires in a and b.
+   */
+  EWiseOp(a, out, tanh);
+}
+
 /// END YOUR SOLUTION
 
 void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uint32_t m, uint32_t n,
@@ -215,7 +350,14 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  Fill(out, 0);
+  for (size_t i = 0; i < m; i++) {
+    for (size_t k = 0; k < p; k++) {
+      for (size_t j = 0; j < n; j++) {
+        out->ptr[i * p + k] += a.ptr[i * n + j] * b.ptr[j * p + k];
+      }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -245,7 +387,13 @@ inline void AlignedDot(const float* __restrict__ a,
   out = (float*)__builtin_assume_aligned(out, TILE * ELEM_SIZE);
 
   /// BEGIN YOUR SOLUTION
-  
+  for (size_t i = 0; i < TILE; i++) {
+    for (size_t k = 0; k < TILE; k++) {
+      for (size_t j = 0; j < TILE; j++) {
+        out[i * TILE + k] += a[i * TILE + j] * b[j * TILE + k];
+      }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -271,7 +419,20 @@ void MatmulTiled(const AlignedArray& a, const AlignedArray& b, AlignedArray* out
    *
    */
   /// BEGIN YOUR SOLUTION
-  
+  Fill(out, 0);
+  size_t m_tile = m / TILE;
+  size_t n_tile = n / TILE;
+  size_t p_tile = p / TILE;
+  for (size_t i = 0; i < m_tile; i++) {
+    for (size_t k = 0; k < p_tile; k++) {
+      for (size_t j = 0; j < n_tile; j++) {
+        scalar_t *a_tile = a.ptr + (i * n_tile + j) * TILE * TILE;
+        scalar_t *b_tile = b.ptr + (j * p_tile + k) * TILE * TILE;
+        scalar_t *out_tile = out->ptr + (i * p_tile + k) * TILE * TILE;
+        AlignedDot(a_tile, b_tile, out_tile);
+      }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -286,7 +447,15 @@ void ReduceMax(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  size_t a_idx = 0;
+  for (size_t i = 0; i < out->size && a_idx < a.size; i++) {
+    scalar_t max_elem = a.ptr[a_idx];
+    for (size_t j = 1; a_idx + j < a.size && j < reduce_size; j++) {
+      max_elem = max(max_elem, a.ptr[a_idx + j]);
+    }
+    out->ptr[i] = max_elem;
+    a_idx += reduce_size;
+  }
   /// END YOUR SOLUTION
 }
 
@@ -301,7 +470,15 @@ void ReduceSum(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  size_t a_idx = 0;
+  for (size_t i = 0; i < out->size && a_idx < a.size; i++) {
+    scalar_t sum_elem = a.ptr[a_idx];
+    for (size_t j = 1; a_idx + j < a.size && j < reduce_size; j++) {
+      sum_elem += a.ptr[a_idx + j];
+    }
+    out->ptr[i] = sum_elem;
+    a_idx += reduce_size;
+  }
   /// END YOUR SOLUTION
 }
 
@@ -343,22 +520,22 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+  m.def("ewise_mul", EwiseMul);
+  m.def("scalar_mul", ScalarMul);
+  m.def("ewise_div", EwiseDiv);
+  m.def("scalar_div", ScalarDiv);
+  m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+  m.def("ewise_maximum", EwiseMaximum);
+  m.def("scalar_maximum", ScalarMaximum);
+  m.def("ewise_eq", EwiseEq);
+  m.def("scalar_eq", ScalarEq);
+  m.def("ewise_ge", EwiseGe);
+  m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+  m.def("ewise_log", EwiseLog);
+  m.def("ewise_exp", EwiseExp);
+  m.def("ewise_tanh", EwiseTanh);
 
   m.def("matmul", Matmul);
   m.def("matmul_tiled", MatmulTiled);
